@@ -4,7 +4,7 @@ author: "Summer Zu, Tianying Xi, Vector Liu, Sky Liu"
 date: "11/28/2018"
 output: html_document
 ---
-
+Load all the packages
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 pacman::p_load(
@@ -27,9 +27,8 @@ pacman::p_load(
 )
 ```
 
+Create all the dataset.
 ```{r}
-
-
 data = fread("fec-independent-expenditures.csv")
 data1<-data%>%dplyr::select(committee_id,committee_name,report_year,payee_name,payee_state,expenditure_description,expenditure_date,expenditure_amount,office_total_ytd,support_oppose_indicator,candidate_id,candidate_name,candidate_office,transaction_id)
 #whether the ads is in support of or opposition to the candidate
@@ -42,15 +41,16 @@ house<-data%>%filter(candidate_office=="H")
 ```
 
 
-##Benford analysis on all advertising expenditure
+####Benford analysis on all advertising expenditure
 ```{r}
 bfd_cp <- benford(data1$expenditure_amount)
 plot(bfd_cp)
 bfd_cp
-
 ```
+Base on the Benford analysis on all the advertising expenditure, digits 34 and 26 have the largest deviations. The mean is very close to 0.5, while skewness is close 0. The p-value is less than 0.05, so the distribution does not follow benford distribution.
 
-##Further analysis on suspected expenditures
+
+####Further analysis on suspected expenditures
 
 52251 suspected expenditure out of 413237
 21202 happened in 2012 and 27767 in 2016, election year
@@ -61,9 +61,10 @@ The top candidate with the largest amount of suspected expenditure in support of
 The top candidate with the largest amount of suspected expenditure in opposition to the candidate is DONALD TRUMP (7386).
 
 ```{r}
+#extract the observations with the largest discrepancies by using the getSuspects function
 suspects_cp <- getSuspects(bfd_cp, data1)
 
-#most of suspect expenditures happens in 2012 and 2016
+#most of suspect expenditures happens in 2012 and 2016 with more than 20 thousand records.
 table(suspects_cp$report_year)
 #most of suspect expenditures happens in president and senate election
 table(suspects_cp$candidate_office)
@@ -84,23 +85,37 @@ top_o_sus_candidate<-tail(o_sus_candidate)
 
 The majority of suspected expenditure in opposition to Trump were from WORKING AMERICA.
 ```{r}
+#Create a new dataset with candidate specified to Trump, Donald.
 TRUMP<-data1%>%filter(candidate_name=="TRUMP, DONALD")
 bfd_Trump <- benford(TRUMP$expenditure_amount)
 plot(bfd_Trump)
 bfd_Trump
+```
+In this dataset, we found digits 34 has the largest deviation Ex.Kurtosis is not close to -1.2. So we were expect some fraud in the data.
 
+
+#### get the detailed information about the fraud data.
+```{r}
 suspects_Trump <- getSuspects(bfd_Trump, TRUMP)
 table(suspects_Trump$committee_name)
 ```
-##Benford Analysis on Trump Expenditure
+from this function, working America seems have the largest porportion of suspicious.
+
+##Benford Analysis on Hillary Expenditure
 
 The majority of suspected expenditure in support of Clinton were from WORKING AMERICA.
+
+Create a new dataset with candidate specified to Clinton, Hillary.
 ```{r}
 Clinton<-data1%>%filter(candidate_name=="CLINTON, HILLARY")
 bfd_Clinton <- benford(Clinton$expenditure_amount)
 plot(bfd_Clinton)
 bfd_Clinton
+```
 
+By checking the data from Hillary, we found the data is has largest deviation on digits 34 and 68. The p-value 2.2e-16 is less than 0.05, which means the distribution does no follow benford law. 
+```{R}
 suspects_Clinton <- getSuspects(bfd_Clinton, Clinton)
 table(suspects_Clinton$committee_name)
 ```
+As we look more detial into the data, we found most of the suspicious record are from Working America. Maybe we should look into to the working America committee to see whether there are fraud in the data. 
