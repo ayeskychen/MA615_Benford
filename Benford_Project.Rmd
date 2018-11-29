@@ -1,0 +1,106 @@
+---
+title: "Benford_Project"
+author: "Summer Zu, Tianying Xi, Vector Liu, Sky Liu"
+date: "11/28/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+pacman::p_load(
+  "ggplot2",
+  "knitr",
+  "readxl",
+  "readr",
+  "tidyr",
+  "dplyr",
+  "zoo",
+  "esquisse",
+  "matlab",
+  "lattice",
+  "grid",
+  "gridExtra",
+  "arm",
+  "ggpubr",
+  "benford.analysis",
+  "data.table"
+)
+```
+
+```{r}
+
+
+data = fread("fec-independent-expenditures.csv")
+data1<-data%>%dplyr::select(committee_id,committee_name,report_year,payee_name,payee_state,expenditure_description,expenditure_date,expenditure_amount,office_total_ytd,support_oppose_indicator,candidate_id,candidate_name,candidate_office,transaction_id)
+#whether the ads is in support of or opposition to the candidate
+support<-data%>%filter(support_oppose_indicator=="S")
+oppose<-data%>%filter(support_oppose_indicator=="O")
+#candidate office: P(president), S(senate), H(house)
+president<-data%>%filter(candidate_office=="P")
+senate<-data%>%filter(candidate_office=="S")
+house<-data%>%filter(candidate_office=="H")
+```
+
+
+##Benford analysis on all advertising expenditure
+```{r}
+bfd_cp <- benford(data1$expenditure_amount)
+plot(bfd_cp)
+bfd_cp
+
+```
+
+##Further analysis on suspected expenditures
+
+52251 suspected expenditure out of 413237
+21202 happened in 2012 and 27767 in 2016, election year
+25833 were for president election, 23715 were for senate election
+About half of the suspected expenditure were in support of the candidate (27844) and the other half were in opposition to the candidate (24402)
+
+The top candidate with the largest amount of suspected expenditure in support of the candidate is HILLARY CLINTON (7386).
+The top candidate with the largest amount of suspected expenditure in opposition to the candidate is DONALD TRUMP (7386).
+
+```{r}
+suspects_cp <- getSuspects(bfd_cp, data1)
+
+#most of suspect expenditures happens in 2012 and 2016
+table(suspects_cp$report_year)
+#most of suspect expenditures happens in president and senate election
+table(suspects_cp$candidate_office)
+table(suspects_cp$support_oppose_indicator)
+s_suspects <- suspects_cp%>%filter(support_oppose_indicator=="S")
+o_suspects <- suspects_cp%>%filter(support_oppose_indicator=="O")
+s_sus_candidate<-as.data.frame(table(s_suspects$candidate_name))
+s_sus_candidate<-s_sus_candidate%>%arrange(Freq)
+top_s_sus_candidate<-tail(s_sus_candidate)
+
+o_sus_candidate<-as.data.frame(table(o_suspects$candidate_name))
+o_sus_candidate<-o_sus_candidate%>%arrange(Freq)
+top_o_sus_candidate<-tail(o_sus_candidate)
+
+```
+
+##Benford Analysis on Trump Expenditure
+
+The majority of suspected expenditure in opposition to Trump were from WORKING AMERICA.
+```{r}
+TRUMP<-data1%>%filter(candidate_name=="TRUMP, DONALD")
+bfd_Trump <- benford(TRUMP$expenditure_amount)
+plot(bfd_Trump)
+bfd_Trump
+
+suspects_Trump <- getSuspects(bfd_Trump, TRUMP)
+table(suspects_Trump$committee_name)
+```
+##Benford Analysis on Trump Expenditure
+
+The majority of suspected expenditure in support of Clinton were from WORKING AMERICA.
+```{r}
+Clinton<-data1%>%filter(candidate_name=="CLINTON, HILLARY")
+bfd_Clinton <- benford(Clinton$expenditure_amount)
+plot(bfd_Clinton)
+bfd_Clinton
+
+suspects_Clinton <- getSuspects(bfd_Clinton, Clinton)
+table(suspects_Clinton$committee_name)
+```
