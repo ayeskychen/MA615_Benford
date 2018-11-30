@@ -1,9 +1,10 @@
 ---
 title: "Benford_Project"
-author: "Summer Zu, Tianying Xi, Vector Liu, Sky Liu"
+author: "Summer Zu, Tianying Xu, Vector Liu, Sky Liu"
 date: "11/28/2018"
-output: html_document
+output: pdf_document
 ---
+
 Load all the packages
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -27,6 +28,10 @@ pacman::p_load(
 )
 ```
 
+
+I. Data
+Our data is about independent expenditures. Independent expenditures are what some refer to as "hard money" in politics -- spending on ads that specifically mention a candidate (either supporting or opposing). The money for these ads must come from Political Ad Spending(PACs) that are independent of the candidate and campaign, and the PACs cannot coordinate with the candidate.
+
 Create all the dataset.
 ```{r}
 data = fread("fec-independent-expenditures.csv")
@@ -41,16 +46,21 @@ house<-data%>%filter(candidate_office=="H")
 ```
 
 
-####Benford analysis on all advertising expenditure
+II. Benford analysis on all advertising expenditure
 ```{r}
 bfd_cp <- benford(data1$expenditure_amount)
 plot(bfd_cp)
 bfd_cp
 ```
-Base on the Benford analysis on all the advertising expenditure, digits 34 and 26 have the largest deviations. The mean is very close to 0.5, while skewness is close 0. The p-value is less than 0.05, so the distribution does not follow benford distribution.
+From the plots of Benford analysis of all the advertising expenditure amount, we can discover several features of the expenditure amount. From the first plot and the benford analysis, it is evident that digits 34, 26, 62, 55 and 68 have deviations from the Benford Law, and among which, digit 34 and 26 have the largest deviation against benford law. From the second plot, we can see that the structure of data is slightly deviated from the benford law. The third plot shows that there is one significant deviation against benford's law.The last two plot shows exactly the 5 unexpected data point and the one significant deviated structure.
+
+Also, the mean of mantissa is very close to 0.5, while skewness is close to 0. In general, he p-value is less than 0.05, so the distribution does not exactly follow benford distribution.
 
 
-####Further analysis on suspected expenditures
+
+III. Further analysis on suspected expenditures
+
+From the tables, it is evident that: 
 
 52251 suspected expenditure out of 413237
 21202 happened in 2012 and 27767 in 2016, election year
@@ -81,9 +91,10 @@ top_o_sus_candidate<-tail(o_sus_candidate)
 
 ```
 
-##Benford Analysis on Trump Expenditure
 
-The majority of suspected expenditure in opposition to Trump were from WORKING AMERICA.
+IV. Benford Analysis on Trump Expenditure
+
+1. The majority of suspected expenditure in opposition to Trump were from WORKING AMERICA.
 ```{r}
 #Create a new dataset with candidate specified to Trump, Donald.
 TRUMP<-data1%>%filter(candidate_name=="TRUMP, DONALD")
@@ -91,17 +102,18 @@ bfd_Trump <- benford(TRUMP$expenditure_amount)
 plot(bfd_Trump)
 bfd_Trump
 ```
-In this dataset, we found digits 34 has the largest deviation Ex.Kurtosis is not close to -1.2. So we were expect some fraud in the data.
+In this dataset, we found digits 34 has the largest deviation Ex.Kurtosis is not close to -1.2. So there are some unexpected data point that doesn't follow benford's law.
 
 
-#### get the detailed information about the fraud data.
+2. Get the detailed information about the unexpected data
 ```{r}
 suspects_Trump <- getSuspects(bfd_Trump, TRUMP)
 table(suspects_Trump$committee_name)
 ```
-from this function, working America seems have the largest porportion of suspicious.
+From this function, working America seems have the largest porportion of suspicious.
 
-##Benford Analysis on Hillary Expenditure
+
+V. Benford Analysis on Hillary Expenditure
 
 The majority of suspected expenditure in support of Clinton were from WORKING AMERICA.
 
